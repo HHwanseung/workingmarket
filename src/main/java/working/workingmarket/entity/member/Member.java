@@ -2,9 +2,15 @@ package working.workingmarket.entity.member;
 
 import lombok.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import working.workingmarket.entity.comment.Comment;
 import working.workingmarket.entity.common.BaseTimeEntity;
+import working.workingmarket.entity.post.Post;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static javax.persistence.CascadeType.ALL;
 
 @Table(name = "MEMBER")
 @Getter
@@ -33,7 +39,31 @@ public class Member extends BaseTimeEntity {
     private Integer age;//나이
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
     private Role role;//권한 -> USER, ADMIN
+
+    @Column(length = 1000)
+    private String refreshToken;//RefreshToken
+
+
+    //== 회원탈퇴 -> 작성한 게시물, 댓글 모두 삭제 ==//
+    @OneToMany(mappedBy = "writer", cascade = ALL, orphanRemoval = true)
+    private List<Post> postList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "writer", cascade = ALL, orphanRemoval = true)
+    private List<Comment> commentList = new ArrayList<>();
+
+    //== 연관관계 메서드 ==//
+    public void addPost(Post post){
+        //post의 writer 설정은 post에서 함
+        postList.add(post);
+    }
+
+    public void addComment(Comment comment){
+        //comment의 writer 설정은 comment에서 함
+        commentList.add(comment);
+    }
+
 
     //== 정보 수정 ==//
     public void updatePassword(PasswordEncoder passwordEncoder, String password){
@@ -50,6 +80,25 @@ public class Member extends BaseTimeEntity {
 
     public void updateAge(int age){
         this.age = age;
+    }
+
+    public void updateRefreshToken(String refreshToken){
+        this.refreshToken = refreshToken;
+    }
+
+    public void destroyRefreshToken(){
+        this.refreshToken = null;
+    }
+
+    //비밀번호 변경, 회원 탈퇴 시, 비밀번호를 확인하며, 이때 비밀번호의 일치여부를 판단하는 메서드입니다.
+    public boolean matchPassword(PasswordEncoder passwordEncoder, String checkPassword){
+        return passwordEncoder.matches(checkPassword, getPassword());
+    }
+
+
+    //회원가입시, USER의 권한을 부여하는 메서드입니다.
+    public void addUserAuthority() {
+        this.role = Role.USER;
     }
 
     //== 패스워드 암호화 ==//
