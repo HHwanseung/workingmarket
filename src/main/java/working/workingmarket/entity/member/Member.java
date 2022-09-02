@@ -45,6 +45,8 @@ public class Member extends BaseTimeEntity {
     @Column(length = 1000)
     private String refreshToken;//RefreshToken
 
+    private String sex;
+
 
     //== 회원탈퇴 -> 작성한 게시물, 댓글 모두 삭제 ==//
     @OneToMany(mappedBy = "writer", cascade = ALL, orphanRemoval = true)
